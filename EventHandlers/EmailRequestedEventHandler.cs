@@ -6,7 +6,7 @@ using Common.Messaging.Models;
 namespace EmailNotification.Models
 {
     public class EmailRequestedEventHandler
-    : BaseEventHandler<Common.Events.Models.EmailRequestedEvent>, IEventBusIntegrationEventHandler<Common.Events.Models.EmailRequestedEvent>
+    : BaseEventHandler<EmailRequestedEvent>, IEventBusIntegrationEventHandler<EmailRequestedEvent>
     {
         private readonly ILogger<EmailRequestedEventHandler> _logger;
         private readonly IEmailSender _emailSender;
@@ -24,9 +24,9 @@ namespace EmailNotification.Models
                 return false;
             }
 
-            _logger.LogInformation("Sending email to: {Email}", eventData.To);
+            _logger.LogInformation("Sending email to: {Email}", eventData.Recipients);
 
-            if (string.IsNullOrWhiteSpace(eventData.To) || string.IsNullOrWhiteSpace(eventData.Subject))
+            if (!eventData.Recipients.Any())
             {
                 _logger.LogWarning("Invalid email event data: To or Subject is missing.");
                 return false;
@@ -40,9 +40,14 @@ namespace EmailNotification.Models
                     ContentType = a.ContentType
                 }).ToList() ?? new();
 
+            var recipients = eventData.Recipients
+                            .Select(c => c.Trim())
+                            .Where(c => !string.IsNullOrWhiteSpace(c))
+                            .ToList();
+
             var request = new EmailRequest
                 {
-                    To = eventData.To.Trim(),
+                    Recipients = recipients,
                     Subject = eventData.Subject,
                     BodyHtml = eventData.BodyHtml ?? string.Empty,
                     Attachments = attachmentList
@@ -51,12 +56,12 @@ namespace EmailNotification.Models
             try
             {
                 await _emailSender.SendAsync(request);
-                _logger.LogInformation("Email sent to {Email}", eventData.To);
+                _logger.LogInformation("Email sent to {Email}", string.Join(", " , recipients));
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send email to {Email}", eventData.To);
+                _logger.LogError(ex, "Failed to send email to {Email}", string.Join(", ", recipients));
                 return false;
             }
         }
