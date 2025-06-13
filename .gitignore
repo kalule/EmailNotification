@@ -1,0 +1,34 @@
+# Build artifacts
+bin/
+obj/
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Rider
+.idea/
+*.sln.iml
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Logs
+Logs/
+*.log
+
+# Auto-generated
+Generated/
+
+# Secrets
+secrets.json
+*.secrets.json
+.env
